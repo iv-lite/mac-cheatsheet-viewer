@@ -2,7 +2,7 @@ use cheatsheet_core::load as load_cheatsheet;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{Manager, State};
+use tauri::{Manager, State, WindowEvent};
 
 #[derive(Serialize, Clone)]
 struct ViewerData {
@@ -84,6 +84,14 @@ pub fn run() {
             let data = build_viewer_data(json_path);
             app.manage(ViewerState(Mutex::new(data)));
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // macOS keeps the process alive after the last window closes, so a
+            // later `open --args` would just activate the stale instance and
+            // ignore the new JSON. Fully exit on close instead (Esc, Cmd+W).
+            if let WindowEvent::Destroyed = event {
+                window.app_handle().exit(0);
+            }
         })
         .invoke_handler(tauri::generate_handler![get_cheatsheet, close_window])
         .run(tauri::generate_context!())
