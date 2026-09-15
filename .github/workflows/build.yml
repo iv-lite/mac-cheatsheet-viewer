@@ -1,0 +1,56 @@
+name: build-and-release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test the cheatsheet schema core
+        run: cargo test -p cheatsheet-core
+
+  release:
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install tauri-cli
+        run: cargo install tauri-cli --locked
+
+      - name: Generate app icons
+        run: cargo tauri icon src-tauri/icons/app-icon.png
+
+      - name: Build the app bundle
+        run: cargo tauri build --bundles app,dmg
+
+      - name: Zip the app bundle
+        run: |
+          APP="src-tauri/target/release/bundle/macos/mac-cheatsheet-viewer.app"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "$RUNNER_TEMP/mac-cheatsheet-viewer.app.zip"
+          ls -la "$RUNNER_TEMP/mac-cheatsheet-viewer.app.zip"
+
+      - name: Upload build artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-cheatsheet-viewer-macos
+          path: |
+            src-tauri/target/release/bundle/macos/*.dmg
+            ${{ runner.temp }}/mac-cheatsheet-viewer.app.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            src-tauri/target/release/bundle/macos/*.dmg
+            ${{ runner.temp }}/mac-cheatsheet-viewer.app.zip

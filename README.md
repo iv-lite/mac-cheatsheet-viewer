@@ -1,0 +1,57 @@
+# mac-cheatsheet-viewer
+
+Borderless always-on-top overlay that renders the Paneru shortcut cheat sheet
+from a JSON file passed as its first launch argument (falling back to
+`~/.config/paneru/cheatsheet.json`).
+
+## Consumed by paneru-wm-installer
+
+This app is built and installed by the
+[`paneru-wm-installer`](https://github.com/iv-lite/rift-wm-installer)
+project: its
+`install-helpers` step clones/pulls this repo (default sibling path
+`../mac-cheatsheet-viewer`, override with `MAC_WM_VIEWER_REPO`), builds the
+app, and copies the bundle into `~/.config/mac-scrolling-wm/helpers/`.
+
+The cheat-sheet **JSON generator** and the **launcher** (`display-shortcuts`)
+live in the installer repo (inside `helpers/`): `generate-shortcuts-json`
+turns the Paneru config's `BINDINGS` table into the JSON, `display-shortcuts`
+opens this app with it, and Paneru's `init.lua` binds it to `Cmd+Shift+?`
+via `paneru.exec`. This app only needs the JSON path as its launch argument.
+
+## Layout
+
+- `crates/cheatsheet-core` — pure Rust: schema types + strict JSON
+  load/validation. No Tauri; unit-testable anywhere (`cargo test`).
+- `src-tauri` — the app: `src/lib.rs` reads argv[1], parses with
+  `cheatsheet-core`, and serves the data to the frontend through the
+  `get_cheatsheet` command (`withGlobalTauri` is on, so nothing needs bundling
+  beyond the static assets). There is **no `devUrl` and no dev server**: Tauri
+  embeds `frontend/dist` (dev uses its built-in static serving, release embeds
+  it), so the app can never launch against an unreachable server.
+- `frontend/` — web asset sources (`index.html`, `style.css`, `app.js`);
+  `frontend/build.sh` stages them into `frontend/dist/` (Tauri's
+  `frontendDist`). `tauri dev`/`tauri build` run it automatically via
+  `beforeDevCommand`/`beforeBuildCommand`; `install-helpers` also runs it
+  explicitly before building.
+- `src-tauri/icons/app-icon.png` — icon source (512×512). Bundling icons are
+  generated from it with `tauri icon` (done automatically by `install-helpers`).
+
+## Building
+
+Run the Tauri commands from the **project root** (the config lives in
+`src-tauri/tauri.conf.json`):
+
+```sh
+cargo install tauri-cli --locked        # once
+bash frontend/build.sh                  # build web assets (before*Command does this too)
+cargo tauri icon src-tauri/icons/app-icon.png  # if src-tauri/icons has no .icns/.ico
+cargo tauri build                       # embeds assets, produces the .app (+ .dmg)
+```
+
+`cargo tauri dev` works the same way (static serving from `frontend/dist`,
+no external server).
+
+GitHub Actions (`.github/workflows/build.yml`) runs `cargo test` on every
+push and, on a `v*` tag, builds and attaches the `.dmg` + zipped `.app` to a
+GitHub Release.
