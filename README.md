@@ -56,3 +56,4 @@ no external server).
 GitHub Actions (`.github/workflows/build.yml`) runs `cargo test` on every
 push and, on a `v*` tag, builds an arm64 `.dmg` + zipped `.app` (app version
 synced to the tag) and publishes a public GitHub Release with both attached.
+A manual run with a `release_version` input publishes a release the same way.
