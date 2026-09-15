@@ -38,6 +38,10 @@ jobs:
       - name: Stage web assets
         run: bash frontend/build.sh
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
       - name: Install Tauri CLI (prebuilt binary)
         run: npm install -D @tauri-apps/cli@2
 
