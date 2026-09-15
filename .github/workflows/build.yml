@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Test the cheatsheet schema core
         run: cargo test -p cheatsheet-core
 
@@ -20,15 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Install tauri-cli
-        run: cargo install tauri-cli --locked
+      - name: Stage web assets
+        run: bash frontend/build.sh
+
+      - name: Install Tauri CLI (prebuilt binary)
+        run: npm install -D @tauri-apps/cli@2
 
       - name: Generate app icons
-        run: cargo tauri icon src-tauri/icons/app-icon.png
+        run: npx tauri icon src-tauri/icons/app-icon.png
 
       - name: Build the app bundle
-        run: cargo tauri build --bundles app,dmg
+        run: npx tauri build --bundles app,dmg
 
       - name: Zip the app bundle
         run: |
