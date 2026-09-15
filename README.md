@@ -47,7 +47,6 @@ Run the Tauri commands from the **project root** (the config lives in
 ```sh
 cargo install tauri-cli --locked        # once
 bash frontend/build.sh                  # build web assets (before*Command does this too)
-cargo tauri icon src-tauri/icons/app-icon.png  # if src-tauri/icons has no .icns/.ico
 cargo tauri build                       # embeds assets, produces the .app (+ .dmg)
 ```
 
@@ -55,5 +54,5 @@ cargo tauri build                       # embeds assets, produces the .app (+ .d
 no external server).
 
 GitHub Actions (`.github/workflows/build.yml`) runs `cargo test` on every
-push and, on a `v*` tag, builds and attaches the `.dmg` + zipped `.app` to a
-GitHub Release.
+push and, on a `v*` tag, builds an arm64 `.dmg` + zipped `.app` (app version
+synced to the tag) and publishes a public GitHub Release with both attached.
