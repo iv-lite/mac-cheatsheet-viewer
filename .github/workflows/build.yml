@@ -37,7 +37,7 @@ jobs:
 
       - name: Zip the app bundle
         run: |
-          APP="src-tauri/target/release/bundle/macos/mac-cheatsheet-viewer.app"
+          APP="target/release/bundle/macos/mac-cheatsheet-viewer.app"
           ditto -c -k --sequesterRsrc --keepParent "$APP" "$RUNNER_TEMP/mac-cheatsheet-viewer.app.zip"
           ls -la "$RUNNER_TEMP/mac-cheatsheet-viewer.app.zip"
 
@@ -47,7 +47,7 @@ jobs:
         with:
           name: mac-cheatsheet-viewer-macos
           path: |
-            src-tauri/target/release/bundle/macos/*.dmg
+            target/release/bundle/macos/*.dmg
             ${{ runner.temp }}/mac-cheatsheet-viewer.app.zip
 
       - name: Create GitHub Release
@@ -57,5 +57,5 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            src-tauri/target/release/bundle/macos/*.dmg
+            target/release/bundle/macos/*.dmg
             ${{ runner.temp }}/mac-cheatsheet-viewer.app.zip
